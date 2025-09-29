@@ -299,7 +299,7 @@ export default function KeyboardTwister() {
 
   const renderKeyLabel = (k: string) => (k === "SPACE" ? "Space" : k);
 
-  const currentlyHeldKeys = useMemo(() => Array.from(pressed).sort(), [pressed]);
+//   const currentlyHeldKeys = useMemo(() => Array.from(pressed).sort(), [pressed]);
 
   // --- Styles ---
   const tileBase =
