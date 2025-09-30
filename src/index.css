@@ -1,7 +1,13 @@
 @import "tailwindcss";
 
-@tailwind utilities;
+/* @tailwind utilities;
 @import "tailwindcss/preflight";
+
+@import "tailwindcss/preflight";
+@tailwind utilities; */
+
+html, body, #root { height: 100%; }
+
 
 /* :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;

@@ -248,6 +248,7 @@ export default function KeyboardTwister() {
     setRound(1);
     setCurrentPlayerIndex(0);
     setMessage("Game on! Click Next Round to assign the first key.");
+	// assignNextKey();
     setLog([]);
   };
 
@@ -471,7 +472,7 @@ export default function KeyboardTwister() {
       </section>
 
       {/* Log */}
-      <section className={skin.panel}>
+      {/* <section className={skin.panel}>
         <h3 className="font-bold mb-2">Game Log</h3>
         <div className="text-sm max-h-48 overflow-auto space-y-1">
           {log.length === 0 && <div className={skin.muted}>—</div>}
@@ -479,7 +480,7 @@ export default function KeyboardTwister() {
             <div key={idx}>{l}</div>
           ))}
         </div>
-      </section>
+      </section> */}
 
       <footer className={`text-center ${skin.muted} text-xs`}>Hold all your assigned keys. Release one and you&apos;re out. Last player standing wins.</footer>
     </div>
