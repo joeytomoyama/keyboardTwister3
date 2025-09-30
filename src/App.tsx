@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { PLAYER_COLORS } from "./utils";
+import SplitText from "./SplitText";
 
 // === Keyboard Twister ===
 // Up to 4 players share one keyboard. Each round assigns a new random key
@@ -10,20 +12,56 @@ import React, { useEffect, useMemo, useState } from "react";
 // - Click player names to rename inline
 // - N-key rollover checker: shows current concurrently held keys & max peak
 
-const PLAYER_COLORS = [
-  { name: "Player 1", color: "#ef4444" }, // red
-  { name: "Player 2", color: "#3b82f6" }, // blue
-  { name: "Player 3", color: "#10b981" }, // green
-  { name: "Player 4", color: "#f59e0b" }, // amber
-];
+// const PLAYER_COLORS = [
+//   { name: "Player 1", color: "#ef4444" }, // red
+//   { name: "Player 2", color: "#3b82f6" }, // blue
+//   { name: "Player 3", color: "#10b981" }, // green
+//   { name: "Player 4", color: "#f59e0b" }, // amber
+// ];
 
 // Layout of a simple US keyboard without symbols; limiting to letters & digits & space.
 const KEY_ROWS: string[][] = [
-  ["1","2","3","4","5","6","7","8","9","0"],
-  ["Q","W","E","R","T","Y","U","I","O","P"],
-  ["A","S","D","F","G","H","J","K","L"],
-  ["Z","X","C","V","B","N","M"],
-  ["SPACE"],
+	["1","2","3","4","5","6","7","8","9","0"],
+	["Q","W","E","R","T","Y","U","I","O","P"],
+	["A","S","D","F","G","H","J","K","L"],
+	["Z","X","C","V","B","N","M"],
+	["SPACE"],
+];
+
+// German QWERTZ layout (DE)
+export const KEY_ROWS_DE: string[][] = [
+	["1","2","3","4","5","6","7","8","9","0"],
+	["Q","W","E","R","T","Z","U","I","O","P"],
+	["A","S","D","F","G","H","J","K","L"],
+	["Y","X","C","V","B","N","M"],
+	["SPACE"],
+];
+
+// French AZERTY layout (FR)
+export const KEY_ROWS_FR: string[][] = [
+	["1","2","3","4","5","6","7","8","9","0"],
+	["A","Z","E","R","T","Y","U","I","O","P"],
+	["Q","S","D","F","G","H","J","K","L","M"],
+	["W","X","C","V","B","N"],
+	["SPACE"],
+];
+
+// Dvorak layout (US)
+export const KEY_ROWS_DVORAK: string[][] = [
+	["1","2","3","4","5","6","7","8","9","0"],
+	["'",",",".","P","Y","F","G","C","R","L"],
+	["A","O","E","U","I","D","H","T","N","S"],
+	["Q","J","K","X","B","M","W","V","Z"],
+	["SPACE"],
+];
+
+// Colemak layout (US)
+export const KEY_ROWS_COLEMAK: string[][] = [
+	["1","2","3","4","5","6","7","8","9","0"],
+	["Q","W","F","P","G","J","L","U","Y",";"],
+	["A","R","S","T","D","H","N","E","I","O"],
+	["Z","X","C","V","B","K","M"],
+	["SPACE"],
 ];
 
 // All selectable keys as a flat list
@@ -101,6 +139,7 @@ export default function KeyboardTwister() {
   const pressed = usePressedKeys();
   const [maxSimultaneous, setMaxSimultaneous] = useState<number>(0);
   const [message, setMessage] = useState<string>("Join up to 4 players and press Start.");
+  const [keyboardLayout, setKeyboardLayout] = useState<string[][]>(KEY_ROWS);
 
   // THEME
   const [theme, setTheme] = useState<Theme>(() => {
@@ -345,9 +384,49 @@ export default function KeyboardTwister() {
   return (
     <div className={skin.page}>
       <header className="flex items-center justify-between">
-        <h1 className="text-2xl md:text-3xl font-bold">Keyboard Twister</h1>
+        {/* <h1 className="text-2xl md:text-3xl font-bold">Keyboard Twister</h1> */}
+		<SplitText
+			text="keyboard twister!"
+			className="text-2xl font-bold text-center"
+			delay={100}
+			duration={0.6}
+			ease="power3.out"
+			splitType="chars"
+			from={{ opacity: 0, y: 40 }}
+			to={{ opacity: 1, y: 0 }}
+			threshold={0.1}
+			rootMargin="-100px"
+			textAlign="center"
+			tag="h3"
+			// onLetterAnimationComplete={handleAnimationComplete}
+		/>
         <div className="flex items-center gap-2">
           {/* Theme toggle */}
+		<select
+			value={JSON.stringify(KEY_ROWS)}
+			onChange={e => {
+				const val = e.target.value;
+				if (val === JSON.stringify(KEY_ROWS_DE)) setKeyboardLayout(KEY_ROWS_DE);
+				else if (val === JSON.stringify(KEY_ROWS_FR)) setKeyboardLayout(KEY_ROWS_FR);
+				else if (val === JSON.stringify(KEY_ROWS_DVORAK)) setKeyboardLayout(KEY_ROWS_DVORAK);
+				else if (val === JSON.stringify(KEY_ROWS_COLEMAK)) setKeyboardLayout(KEY_ROWS_COLEMAK);
+				else setKeyboardLayout(KEY_ROWS);
+			}}
+			className="px-3 py-2 rounded-xl border font-semibold hover:opacity-90"
+			style={{
+				background: skin.btnGhost.bg,
+				color: skin.btnGhost.text,
+				borderColor: skin.btnGhost.border,
+			}}
+			title="Switch keyboard layout"
+		>
+			<option value={JSON.stringify(KEY_ROWS)}>US QWERTY</option>
+			<option value={JSON.stringify(KEY_ROWS_DE)}>DE QWERTZ</option>
+			<option value={JSON.stringify(KEY_ROWS_FR)}>FR AZERTY</option>
+			<option value={JSON.stringify(KEY_ROWS_DVORAK)}>US Dvorak</option>
+			<option value={JSON.stringify(KEY_ROWS_COLEMAK)}>US Colemak</option>
+		</select>
+
           <button
             onClick={() => setTheme(t => (t === 'light' ? 'dark' : 'light'))}
             className="px-3 py-2 rounded-xl border font-semibold hover:opacity-90"
@@ -485,7 +564,7 @@ export default function KeyboardTwister() {
       <section className={skin.softPanel}>
         <h3 className="font-bold mb-3">Keyboard</h3>
         <div className="flex flex-col gap-2">
-          {KEY_ROWS.map((row, ri) => (
+          {keyboardLayout.map((row, ri) => (
             <div key={ri} className="flex gap-2 justify-center">
               {row.map((k) => {
                 const owner = ownerOf(k);
