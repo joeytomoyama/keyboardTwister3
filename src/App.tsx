@@ -166,6 +166,7 @@ export default function KeyboardTwister() {
 
   // Keep a basic history log for fun/debug
   const [log, setLog] = useState<string[]>([]);
+  console.log('log', log); // prevent unused var warning
   const addLog = (line: string) => setLog(prev => [line, ...prev].slice(0, 50));
 
   const activePlayers = useMemo(() => players.filter(p => p.alive), [players]);
@@ -222,6 +223,43 @@ export default function KeyboardTwister() {
     setCurrentPlayerIndex(idx);
   }, [players, phase]);
 
+//   useEffect(() => {
+// 	if (phase !== "playing") return;
+//     if (activePlayers.length === 0) return;
+// 	assignNextKey();
+// //   }, [players, phase, round])
+//   }, [round])
+
+  useEffect(() => {
+	if (phase !== "playing") return;
+	assignNextKey();
+  }, [phase])
+
+  // keyboard listener for f keys to join/leave players in lobby
+	useEffect(() => {
+		const handleFKey = (e: KeyboardEvent) => {
+			if (phase !== "lobby") return;
+			if (e.repeat) return;
+			if (document.activeElement && (document.activeElement.tagName === "INPUT" || (document.activeElement as HTMLElement).isContentEditable)) return;
+			let slot: number | null = null;
+			if (e.key === "F1") slot = 0;
+			if (e.key === "F2") slot = 1;
+			if (e.key === "F3") slot = 2;
+			if (e.key === "F4") slot = 3;
+			if (slot !== null) {
+				e.preventDefault();
+				const joined = !!players.find(p => p.id === slot);
+				if (joined) {
+					leavePlayer(slot);
+				} else {
+					joinPlayer(slot);
+				}
+			}
+		};
+		window.addEventListener("keydown", handleFKey);
+		return () => window.removeEventListener("keydown", handleFKey);
+	}, [phase, players, slotNames]);
+
   const joinPlayer = (slot: number) => {
     if (phase !== "lobby") return;
     if (players.find(p => p.id === slot)) return;
@@ -247,8 +285,6 @@ export default function KeyboardTwister() {
     setPhase("playing");
     setRound(1);
     setCurrentPlayerIndex(0);
-    setMessage("Game on! Click Next Round to assign the first key.");
-	// assignNextKey();
     setLog([]);
   };
 
@@ -269,8 +305,8 @@ export default function KeyboardTwister() {
   }, [players]);
 
   const assignNextKey = () => {
-    if (phase !== "playing") return;
-    if (activePlayers.length === 0) return;
+    // if (phase !== "playing") return;
+    // if (activePlayers.length === 0) return;
     if (availableKeys.length === 0) {
       setMessage("No keys left to assign! 😅");
       return;
@@ -285,7 +321,7 @@ export default function KeyboardTwister() {
       p.id === target.id ? { ...p, keys: [...p.keys, key] } : p
     )));
 
-    setRound(r => r + 1);
+    // setRound(r => r + 1);
     setCurrentPlayerIndex(i => (i + 1) % activePlayers.length);
     setMessage(`${target.name}: Hold ${renderKeyLabel(key)} (now hold ${target.keys.length + 1} key${target.keys.length ? "s" : ""}).`);
     addLog(`Round ${round}: ${target.name} assigned ${key}`);
@@ -357,7 +393,7 @@ export default function KeyboardTwister() {
           <div className="flex items-center gap-4">
             <div className="text-sm">Currently held: <span className="font-bold">{pressed.size}</span></div>
             <div className="text-sm">Max held at once: <span className="font-bold">{maxSimultaneous}</span></div>
-            <button
+            {/* <button
               onClick={() => setMaxSimultaneous(0)}
               className="px-3 py-1 rounded-lg border font-semibold hover:opacity-90"
               style={{
@@ -365,9 +401,9 @@ export default function KeyboardTwister() {
                 color: skin.btnGhost.text,
                 borderColor: skin.btnGhost.border,
               }}
-            >Reset Max</button>
+            >Reset Max</button> */}
           </div>
-          <div className={`text-sm ${skin.muted}`}>Tip: Press multiple keys together to test your keyboard&apos;s rollover. Many office keyboards cap at 5–6; gaming boards may be full NKRO.</div>
+          <div className={`text-sm ${skin.muted}`}>Tip: Press multiple keys together to test your keyboard&apos;s rollover. Many office keyboards cap at 5-6; gaming boards may be full NKRO.</div>
         </div>
         {/* {currentlyHeldKeys.length > 0 && (
           <div className="text-sm">
