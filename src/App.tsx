@@ -12,13 +12,6 @@ import SplitText from "./SplitText";
 // - Click player names to rename inline
 // - N-key rollover checker: shows current concurrently held keys & max peak
 
-// const PLAYER_COLORS = [
-//   { name: "Player 1", color: "#ef4444" }, // red
-//   { name: "Player 2", color: "#3b82f6" }, // blue
-//   { name: "Player 3", color: "#10b981" }, // green
-//   { name: "Player 4", color: "#f59e0b" }, // amber
-// ];
-
 // Layout of a simple US keyboard without symbols; limiting to letters & digits & space.
 const KEY_ROWS: string[][] = [
 	["1","2","3","4","5","6","7","8","9","0"],
@@ -275,8 +268,9 @@ export default function KeyboardTwister() {
   }, [phase])
 
   // keyboard listener for f keys to join/leave players in lobby
+	// F1-F4 join/leave only in lobby
 	useEffect(() => {
-		const handleFKey = (e: KeyboardEvent) => {
+		const handleFKeys = (e: KeyboardEvent) => {
 			if (phase !== "lobby") return;
 			if (e.repeat) return;
 			if (document.activeElement && (document.activeElement.tagName === "INPUT" || (document.activeElement as HTMLElement).isContentEditable)) return;
@@ -295,8 +289,26 @@ export default function KeyboardTwister() {
 				}
 			}
 		};
-		window.addEventListener("keydown", handleFKey);
-		return () => window.removeEventListener("keydown", handleFKey);
+
+		window.addEventListener("keydown", handleFKeys);
+		return () => window.removeEventListener("keydown", handleFKeys);
+	}, [phase, players, slotNames]);
+
+	// Enter key listener for all phases
+	useEffect(() => {
+		const handleEnter = (e: KeyboardEvent) => {
+			if (e.repeat) return;
+			if (document.activeElement && (document.activeElement.tagName === "INPUT" || (document.activeElement as HTMLElement).isContentEditable)) return;
+			if (e.key === "Enter") {
+				e.preventDefault();
+				if (phase === "lobby") startGame();
+				else if (phase === "playing") assignNextKey();
+				else if (phase === "finished") resetGame();
+			}
+		};
+
+		window.addEventListener("keydown", handleEnter);
+		return () => window.removeEventListener("keydown", handleEnter);
 	}, [phase, players, slotNames]);
 
   const joinPlayer = (slot: number) => {
@@ -331,7 +343,7 @@ export default function KeyboardTwister() {
     setPhase("lobby");
     setRound(1);
     setCurrentPlayerIndex(0);
-    setPlayers([]);
+    // setPlayers([]);
     setMessage("Join up to 4 players and press Start.");
     setLog([]);
   };
@@ -346,6 +358,10 @@ export default function KeyboardTwister() {
   const assignNextKey = () => {
     // if (phase !== "playing") return;
     // if (activePlayers.length === 0) return;
+	if (activePlayers.some(p => p.keys.length > 0 && !p.keys.every(k => pressed.has(k)))) {
+		setMessage("All assigned keys must be held before next round!");
+		return;
+	}
     if (availableKeys.length === 0) {
       setMessage("No keys left to assign! 😅");
       return;
@@ -441,16 +457,16 @@ export default function KeyboardTwister() {
           </button>
 
           {phase === "lobby" && (
-            <button onClick={startGame} className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl font-semibold">Start</button>
+            <button onClick={startGame} className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl font-semibold">Start (Enter)</button>
           )}
           {phase === "playing" && (
             <>
-              <button onClick={assignNextKey} className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-xl font-semibold">Next Round</button>
+              <button onClick={assignNextKey} className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-xl font-semibold">Next Round (Enter)</button>
               <button onClick={resetGame} className={`${skin.btnReset} px-4 py-2 rounded-xl font-semibold`}>Reset</button>
             </>
           )}
           {phase === "finished" && (
-            <button onClick={resetGame} className="bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded-xl font-semibold">New Game</button>
+            <button onClick={resetGame} className="bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded-xl font-semibold">New Game (Enter)</button>
           )}
         </div>
       </header>
