@@ -118,6 +118,7 @@ type Player = {
   color: string;
   alive: boolean;
   keys: string[]; // keys assigned to this player
+  armed: string[];
 };
 
 type Phase = "lobby" | "playing" | "finished";
@@ -213,28 +214,44 @@ export default function KeyboardTwister() {
     return map;
   }, [players]);
 
-  // Determine eliminated players when any assigned key is not pressed
-  useEffect(() => {
-    if (phase !== "playing") return;
+	// Elimination check with arming:
+	// - A newly assigned key does NOT eliminate the player until they have pressed it at least once.
+	// - Once pressed (armed), releasing it later eliminates the player.
+	useEffect(() => {
+	if (phase !== 'playing') return;
 
-    setPlayers(prev => {
-      let changed = false;
-      const next = prev.map(p => ({ ...p }));
-      for (const p of next) {
-        if (!p.alive) continue;
-        const allHeld = p.keys.every(k => pressed.has(k));
-        if (!allHeld && p.keys.length > 0) {
-          p.alive = false;
-          changed = true;
-        }
-      }
-      if (changed) {
-        const eliminated = next.filter(p => !p.alive && prev.find(pp => pp.id === p.id)?.alive);
-        eliminated.forEach(p => addLog(`${p.name} eliminated!`));
-      }
-      return next;
-    });
-  }, [pressed, phase]);
+	setPlayers(prev => {
+		let changed = false;
+		const next = prev.map(p => ({ ...p, armed: p.armed ? [...p.armed] : [] }));
+
+		for (const p of next) {
+		if (!p.alive) continue;
+
+		// Arm any assigned keys that are currently pressed
+		for (const k of p.keys) {
+			if (pressed.has(k) && !p.armed.includes(k)) {
+			p.armed.push(k);
+			}
+		}
+
+		// Eliminate only if any ARMED key is currently not pressed
+		if (p.armed.length > 0) {
+			const released = p.armed.some(k => !pressed.has(k));
+			if (released) {
+			p.alive = false;
+			changed = true;
+			}
+		}
+		}
+
+		if (changed) {
+		const eliminated = next.filter(p => !p.alive && prev.find(pp => pp.id === p.id)?.alive);
+		eliminated.forEach(p => addLog(`${p.name} eliminated!`));
+		}
+
+		return next;
+	});
+	}, [pressed, phase]);
 
   // Victory condition
   useEffect(() => {
@@ -254,13 +271,6 @@ export default function KeyboardTwister() {
     const idx = currentPlayerIndex % activePlayers.length;
     setCurrentPlayerIndex(idx);
   }, [players, phase]);
-
-//   useEffect(() => {
-// 	if (phase !== "playing") return;
-//     if (activePlayers.length === 0) return;
-// 	assignNextKey();
-// //   }, [players, phase, round])
-//   }, [round])
 
   useEffect(() => {
 	if (phase !== "playing") return;
@@ -317,7 +327,7 @@ export default function KeyboardTwister() {
     const def = PLAYER_COLORS[slot];
     setPlayers(prev => [
       ...prev,
-      { id: slot, name: slotNames[slot] || def.name, color: def.color, alive: true, keys: [] },
+      { id: slot, name: slotNames[slot] || def.name, color: def.color, alive: true, keys: [], armed: [] },
     ]);
   };
 
@@ -332,7 +342,7 @@ export default function KeyboardTwister() {
       return;
     }
     // Reset states
-    setPlayers(prev => prev.map(p => ({ ...p, alive: true, keys: [] })));
+    setPlayers(prev => prev.map(p => ({ ...p, alive: true, keys: [], armed: [] })));
     setPhase("playing");
     setRound(1);
     setCurrentPlayerIndex(0);
@@ -343,7 +353,7 @@ export default function KeyboardTwister() {
     setPhase("lobby");
     setRound(1);
     setCurrentPlayerIndex(0);
-    // setPlayers([]);
+    setPlayers([]);
     setMessage("Join up to 4 players and press Start.");
     setLog([]);
   };
@@ -376,7 +386,7 @@ export default function KeyboardTwister() {
       p.id === target.id ? { ...p, keys: [...p.keys, key] } : p
     )));
 
-    // setRound(r => r + 1);
+    setRound(r => r + 1);
     setCurrentPlayerIndex(i => (i + 1) % activePlayers.length);
     setMessage(`${target.name}: Hold ${renderKeyLabel(key)} (now hold ${target.keys.length + 1} key${target.keys.length ? "s" : ""}).`);
     addLog(`Round ${round}: ${target.name} assigned ${key}`);
@@ -402,13 +412,13 @@ export default function KeyboardTwister() {
       <header className="flex items-center justify-between">
         {/* <h1 className="text-2xl md:text-3xl font-bold">Keyboard Twister</h1> */}
 		<SplitText
-			text="keyboard twister!"
-			className="text-2xl font-bold text-center"
+			text="keyboard twister"
+			className="text-5xl font-bold text-center p-3"
 			delay={100}
 			duration={0.6}
 			ease="power3.out"
 			splitType="chars"
-			from={{ opacity: 0, y: 40 }}
+			from={{ opacity: 0, y: -40 }}
 			to={{ opacity: 1, y: 0 }}
 			threshold={0.1}
 			rootMargin="-100px"
@@ -419,14 +429,16 @@ export default function KeyboardTwister() {
         <div className="flex items-center gap-2">
           {/* Theme toggle */}
 		<select
-			value={JSON.stringify(KEY_ROWS)}
+			// value={JSON.stringify(KEY_ROWS)}
+			value={JSON.stringify(keyboardLayout)}
 			onChange={e => {
 				const val = e.target.value;
-				if (val === JSON.stringify(KEY_ROWS_DE)) setKeyboardLayout(KEY_ROWS_DE);
+				if (val === JSON.stringify(KEY_ROWS)) setKeyboardLayout(KEY_ROWS);
+				else if (val === JSON.stringify(KEY_ROWS_DE)) setKeyboardLayout(KEY_ROWS_DE);
 				else if (val === JSON.stringify(KEY_ROWS_FR)) setKeyboardLayout(KEY_ROWS_FR);
 				else if (val === JSON.stringify(KEY_ROWS_DVORAK)) setKeyboardLayout(KEY_ROWS_DVORAK);
 				else if (val === JSON.stringify(KEY_ROWS_COLEMAK)) setKeyboardLayout(KEY_ROWS_COLEMAK);
-				else setKeyboardLayout(KEY_ROWS);
+				// else setKeyboardLayout(KEY_ROWS);
 			}}
 			className="px-3 py-2 rounded-xl border font-semibold hover:opacity-90"
 			style={{
