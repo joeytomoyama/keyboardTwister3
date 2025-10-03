@@ -220,37 +220,37 @@ export default function KeyboardTwister() {
 	useEffect(() => {
 	if (phase !== 'playing') return;
 
-	setPlayers(prev => {
-		let changed = false;
-		const next = prev.map(p => ({ ...p, armed: p.armed ? [...p.armed] : [] }));
+		setPlayers(prev => {
+			let changed = false;
+			const next = prev.map(p => ({ ...p, armed: p.armed ? [...p.armed] : [] }));
 
-		for (const p of next) {
-		if (!p.alive) continue;
+			for (const p of next) {
+				if (!p.alive) continue;
 
-		// Arm any assigned keys that are currently pressed
-		for (const k of p.keys) {
-			if (pressed.has(k) && !p.armed.includes(k)) {
-			p.armed.push(k);
+				// Arm any assigned keys that are currently pressed
+				for (const k of p.keys) {
+					if (pressed.has(k) && !p.armed.includes(k)) {
+						p.armed.push(k);
+					}
+				}
+
+				// Eliminate only if any ARMED key is currently not pressed
+				if (p.armed.length > 0) {
+					const released = p.armed.some(k => !pressed.has(k));
+					if (released) {
+						p.alive = false;
+						changed = true;
+					}
+				}
 			}
-		}
 
-		// Eliminate only if any ARMED key is currently not pressed
-		if (p.armed.length > 0) {
-			const released = p.armed.some(k => !pressed.has(k));
-			if (released) {
-			p.alive = false;
-			changed = true;
+			if (changed) {
+				const eliminated = next.filter(p => !p.alive && prev.find(pp => pp.id === p.id)?.alive);
+				eliminated.forEach(p => addLog(`${p.name} eliminated!`));
 			}
-		}
-		}
 
-		if (changed) {
-		const eliminated = next.filter(p => !p.alive && prev.find(pp => pp.id === p.id)?.alive);
-		eliminated.forEach(p => addLog(`${p.name} eliminated!`));
-		}
-
-		return next;
-	});
+			return next;
+		});
 	}, [pressed, phase]);
 
   // Victory condition
@@ -599,7 +599,7 @@ export default function KeyboardTwister() {
                 const isDown = pressed.has(k);
                 const bg = owner ? owner.color : isDown ? skin.keyPressed : skin.keyUnowned;
                 const border = isDown ? skin.keyPressedBorder : skin.keyBorder;
-                const w = k === "SPACE" ? "w-3/4" : "w-12";
+                const w = k === "SPACE" ? "w-60" : "w-12";
                 return (
                   <div key={k}
                        className={`${tileBase} ${w}`}
