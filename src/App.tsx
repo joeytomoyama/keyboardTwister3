@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { PLAYER_COLORS } from "./utils";
 import SplitText from "./SplitText";
+import confetti from "canvas-confetti";
 
 // === Keyboard Twister ===
 // Up to 4 players share one keyboard. Each round assigns a new random key
@@ -261,6 +262,11 @@ export default function KeyboardTwister() {
       setPhase("finished");
       setMessage(`${winner.name} wins! 🎉`);
       addLog(`${winner.name} wins!`);
+	  confetti({
+		particleCount: 150,
+		spread: 100,
+		origin: { y: 0.6 }
+	  });
     }
   }, [activePlayers, phase]);
 
@@ -353,7 +359,8 @@ export default function KeyboardTwister() {
     setPhase("lobby");
     setRound(1);
     setCurrentPlayerIndex(0);
-    setPlayers([]);
+    // setPlayers([]);
+    setPlayers(prev => prev.map(p => ({ ...p, alive: true, keys: [], armed: [] })));
     setMessage("Join up to 4 players and press Start.");
     setLog([]);
   };
@@ -494,31 +501,6 @@ export default function KeyboardTwister() {
         </div>
       </div>
 
-      {/* N-Key Rollover Checker */}
-      <section className={`${skin.panel} flex flex-col gap-3`}>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <div className="flex items-center gap-4">
-            <div className="text-sm">Currently held: <span className="font-bold">{pressed.size}</span></div>
-            <div className="text-sm">Max held at once: <span className="font-bold">{maxSimultaneous}</span></div>
-            {/* <button
-              onClick={() => setMaxSimultaneous(0)}
-              className="px-3 py-1 rounded-lg border font-semibold hover:opacity-90"
-              style={{
-                background: skin.btnGhost.bg,
-                color: skin.btnGhost.text,
-                borderColor: skin.btnGhost.border,
-              }}
-            >Reset Max</button> */}
-          </div>
-          <div className={`text-sm ${skin.muted}`}>Tip: Press multiple keys together to test your keyboard&apos;s rollover. Many office keyboards cap at 5-6; gaming boards may be full NKRO.</div>
-        </div>
-        {/* {currentlyHeldKeys.length > 0 && (
-          <div className="text-sm">
-            Held keys: <span className="font-semibold">{currentlyHeldKeys.map(k => k === 'SPACE' ? 'Space' : k).join(', ')}</span>
-          </div>
-        )} */}
-      </section>
-
       {/* Players Panel */}
       <section className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
         {PLAYER_COLORS.map((pc, i) => {
@@ -612,6 +594,31 @@ export default function KeyboardTwister() {
           ))}
         </div>
         <p className={`mt-3 text-sm ${skin.muted}`}>Tip: Assigned keys are tinted with the owner&apos;s color. A bold border indicates the key is currently pressed.</p>
+      </section>
+
+      {/* N-Key Rollover Checker */}
+      <section className={`${skin.panel} flex flex-col gap-3`}>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div className="flex items-center gap-4">
+            <div className="text-sm">Currently held: <span className="font-bold">{pressed.size}</span></div>
+            <div className="text-sm">Max held at once: <span className="font-bold">{maxSimultaneous}</span></div>
+            {/* <button
+              onClick={() => setMaxSimultaneous(0)}
+              className="px-3 py-1 rounded-lg border font-semibold hover:opacity-90"
+              style={{
+                background: skin.btnGhost.bg,
+                color: skin.btnGhost.text,
+                borderColor: skin.btnGhost.border,
+              }}
+            >Reset Max</button> */}
+          </div>
+          <div className={`text-sm ${skin.muted}`}>Tip: Press multiple keys together to test your keyboard&apos;s rollover. Many office keyboards cap at 5-6; gaming boards may be full NKRO.</div>
+        </div>
+        {/* {currentlyHeldKeys.length > 0 && (
+          <div className="text-sm">
+            Held keys: <span className="font-semibold">{currentlyHeldKeys.map(k => k === 'SPACE' ? 'Space' : k).join(', ')}</span>
+          </div>
+        )} */}
       </section>
 
       {/* Log */}
